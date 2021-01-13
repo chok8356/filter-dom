@@ -1,9 +1,9 @@
-const picker = {}
+const DOMHighlight = {}
 
 const NoPaths = 'M0 0'
 
 const css = `
-svg.picker-highlight-elements {
+#dom-highlight {
   cursor: crosshair;
   box-sizing: border-box;
   height: 100%;
@@ -14,24 +14,24 @@ svg.picker-highlight-elements {
   position: fixed;
   pointer-events: none;
 }
-svg.picker-highlight-elements > path:first-child {
+#dom-highlight > path:first-child {
   fill: rgba(0,0,0,0);
   fill-rule: evenodd;
 }
-svg.picker-highlight-elements > path + path {
+#dom-highlight > path + path {
   stroke: #F00;
   stroke-width: 0.5px;
   fill: rgba(255,63,63,0.25);
 }
 `
 
-picker.svgRoot = null
-picker.svgOcean = null
-picker.svgIslands = null
+DOMHighlight.svgRoot = null
+DOMHighlight.svgOcean = null
+DOMHighlight.svgIslands = null
 
-picker.targetElements = []
+DOMHighlight.targetElements = []
 
-picker.getElementBoundingClientRect = function(elem) {
+DOMHighlight.getElementBoundingClientRect = function(elem) {
   let rect = typeof elem.getBoundingClientRect === 'function'
     ? elem.getBoundingClientRect()
     : { height: 0, left: 0, top: 0, width: 0 }
@@ -46,7 +46,7 @@ picker.getElementBoundingClientRect = function(elem) {
   let bottom = rect.bottom
 
   for (const child of elem.children) {
-    rect = picker.getElementBoundingClientRect(child)
+    rect = DOMHighlight.getElementBoundingClientRect(child)
     if (rect.width === 0 || rect.height === 0) {
       continue
     }
@@ -64,16 +64,16 @@ picker.getElementBoundingClientRect = function(elem) {
   }
 }
 
-picker.highlightElements = function(elems, force) {
+DOMHighlight.highlightElements = function(elems, force) {
   // To make mouse move handler more efficient
   if (
     (force !== true) &&
-      (elems.length === picker.targetElements.length) &&
-      (elems.length === 0 || elems[0] === picker.targetElements[0])
+    (elems.length === DOMHighlight.targetElements.length) &&
+    (elems.length === 0 || elems[0] === DOMHighlight.targetElements[0])
   ) {
     return
   }
-  picker.targetElements = []
+  DOMHighlight.targetElements = []
 
   const ow = self.innerWidth
   const oh = self.innerHeight
@@ -82,8 +82,8 @@ picker.highlightElements = function(elems, force) {
 
   for (const elem of elems) {
     // if (elem === pickerRoot) { continue }
-    picker.targetElements.push(elem)
-    const rect = picker.getElementBoundingClientRect(elem)
+    DOMHighlight.targetElements.push(elem)
+    const rect = DOMHighlight.getElementBoundingClientRect(elem)
     // Ignore offscreen areas
     if (
       rect.left > ow || rect.top > oh ||
@@ -98,13 +98,13 @@ picker.highlightElements = function(elems, force) {
   islands = islands.join('')
   ocean += islands
 
-  picker.svgOcean.setAttribute('d', ocean)
-  picker.svgIslands.setAttribute('d', islands || NoPaths)
+  DOMHighlight.svgOcean.setAttribute('d', ocean)
+  DOMHighlight.svgIslands.setAttribute('d', islands || NoPaths)
 }
 
-picker.createSvg = function() {
+DOMHighlight.createSvg = function() {
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.classList.add('picker-highlight-elements')
+  svg.setAttribute('id', 'dom-highlight')
   const svgOcean = document.createElementNS('http://www.w3.org/2000/svg', 'path')
   const svgIslands = document.createElementNS('http://www.w3.org/2000/svg', 'path')
   svg.appendChild(svgOcean)
@@ -112,19 +112,19 @@ picker.createSvg = function() {
   return svg
 }
 
-picker.start = function() {
+DOMHighlight.start = function() {
   const onViewportChanged = function() {
-    picker.highlightElements(picker.targetElements, true)
+    DOMHighlight.highlightElements(DOMHighlight.targetElements, true)
   }
   self.addEventListener('scroll', onViewportChanged, { passive: true })
   self.addEventListener('resize', onViewportChanged, { passive: true })
 
-  picker.svgRoot = picker.createSvg()
-  picker.svgOcean = picker.svgRoot.children[0]
-  picker.svgIslands = picker.svgRoot.children[1]
-  document.body.appendChild(picker.svgRoot)
+  DOMHighlight.svgRoot = DOMHighlight.createSvg()
+  DOMHighlight.svgOcean = DOMHighlight.svgRoot.children[0]
+  DOMHighlight.svgIslands = DOMHighlight.svgRoot.children[1]
+  document.body.appendChild(DOMHighlight.svgRoot)
 
   document.head.insertAdjacentHTML('beforeend', `<style>${css}</style>`)
 }
 
-export default picker
+export default DOMHighlight
